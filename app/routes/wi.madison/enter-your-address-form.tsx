@@ -10,7 +10,7 @@ import {
 } from '@mantine/core'
 import { Form } from '@remix-run/react'
 import { IconInfoCircle } from '@tabler/icons-react'
-import { StreetDirection, StreetType } from './enums'
+import { StreetDirection, StreetType } from '../../enums'
 
 export interface EnterYourAddressFormProps {
   formProps: {
