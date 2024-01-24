@@ -1,27 +1,17 @@
-import type { Address } from '../../address-store.server'
-import {
-  Button,
-  Card,
-  Group,
-  List,
-  ListItem,
-  Stack,
-  Text,
-  Title,
-  Transition,
-  rem,
-} from '@mantine/core'
+import { Button, List, ListItem, Stack, Title } from '@mantine/core'
 import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
   type MetaFunction,
 } from '@remix-run/cloudflare'
 import { json, redirect } from '@remix-run/cloudflare'
-import { useFetcher, useFetchers, useLoaderData } from '@remix-run/react'
-import { IconRecycle, IconTextPlus, IconTrash } from '@tabler/icons-react'
+import { useLoaderData } from '@remix-run/react'
+import { IconTextPlus } from '@tabler/icons-react'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
+import { TrashPickupCard } from './trash-pickup-card'
 import { AddressStore } from '../../address-store.server'
+import { getNextWasteEvent } from '../../data'
 
 export const meta: MetaFunction = () => {
   return [
@@ -42,7 +32,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   return json({
-    addresses: store.list(),
+    today: new Date(),
+    cards: store.list().map((address) => ({
+      address,
+      // TODO: fetch this with a POST
+      event: getNextWasteEvent(new Date(), 'tueB'),
+    })),
   })
 }
 
@@ -57,25 +52,21 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     store.remove(id)
     return json({}, { headers: { 'Set-Cookie': await store.serialize() } })
   }
+
   return {}
 }
 
 export default function Index() {
-  const { addresses } = useLoaderData<typeof loader>()
-  const fetchers = useFetchers()
-
-  const updating = fetchers.some((fetcher) => fetcher.state === 'submitting')
+  const { today, cards } = useLoaderData<typeof loader>()
 
   return (
     <Stack justify="center" align="center">
       <Title order={1}>Your Addresses</Title>
       <List spacing="sm" listStyleType="none">
-        {addresses.map((address) => (
-          <AddressListItem
-            key={address.id}
-            address={address}
-            updating={updating}
-          />
+        {cards.map(({ address, event }) => (
+          <ListItem key={address.id}>
+            <TrashPickupCard baseDate={today} event={event} address={address} />
+          </ListItem>
         ))}
       </List>
       <Button
@@ -89,72 +80,5 @@ export default function Index() {
         Add an address
       </Button>
     </Stack>
-  )
-}
-
-interface AddressListItemProps {
-  address: Address
-  updating: boolean
-}
-
-function AddressListItem({
-  updating,
-  address: {
-    id,
-    streetNumber,
-    streetName,
-    streetDirection,
-    streetType,
-    unitNumber,
-    city,
-    state,
-  },
-}: AddressListItemProps) {
-  const fetcher = useFetcher({ key: `delete-address-${id}` })
-
-  return (
-    <Transition mounted={fetcher.state === 'idle'}>
-      {(styles) => (
-        <ListItem>
-          <Card padding="lg" radius="md" withBorder w="320px" style={styles}>
-            <Card.Section>
-              <Title order={3}>
-                {streetNumber} {streetDirection} {streetName} {streetType}{' '}
-                {unitNumber ? `#${unitNumber}` : ''} {city}, {state}
-              </Title>
-            </Card.Section>
-            <Card.Section py="xl">
-              <Group justify="center">
-                <IconRecycle size="54" />
-                <IconTrash size="54" />
-              </Group>
-            </Card.Section>
-            <Card.Section inheritPadding>
-              <Text>
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              </Text>
-            </Card.Section>
-            <Card.Section>
-              <fetcher.Form method="post">
-                <input type="hidden" name="id" value={id} />
-                <Button
-                  type="submit"
-                  value="delete"
-                  disabled={updating}
-                  fullWidth
-                  variant="subtle"
-                  size="xs"
-                  leftSection={
-                    <IconTrash style={{ width: rem(16), height: rem(16) }} />
-                  }
-                >
-                  Remove
-                </Button>
-              </fetcher.Form>
-            </Card.Section>
-          </Card>{' '}
-        </ListItem>
-      )}
-    </Transition>
   )
 }
