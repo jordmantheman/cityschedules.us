@@ -1,15 +1,22 @@
+import type { CalendarEvent } from '../../data'
 import { Button, List, ListItem, Stack, Title } from '@mantine/core'
 import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
   type MetaFunction,
 } from '@remix-run/cloudflare'
-import { json, redirect } from '@remix-run/cloudflare'
-import { useLoaderData } from '@remix-run/react'
+import { defer, json, redirect } from '@remix-run/cloudflare'
+import { Await, useLoaderData } from '@remix-run/react'
 import { IconTextPlus } from '@tabler/icons-react'
+import { chain } from 'lodash'
+import { Suspense } from 'react'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
-import { TrashPickupCard } from './trash-pickup-card'
+import {
+  LoadingTrashPickupCard,
+  TrashPickupCard,
+  isValidEvent,
+} from './trash-pickup-card'
 import { AddressStore } from '../../address-store.server'
 import { getNextWasteEvent } from '../../data'
 
@@ -27,17 +34,29 @@ export const meta: MetaFunction = () => {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const store = await AddressStore.parse(request)
 
-  if (store.list().length === 0) {
-    return redirect('/wi/madison')
+  const addresses = store.list()
+
+  if (addresses.length === 0) {
+    throw redirect('/wi/madison')
   }
 
-  return json({
+  const calendarEventsByAddressId = chain(addresses)
+    .keyBy('id')
+    .mapValues(
+      (address) =>
+        new Promise<CalendarEvent>((resolve) =>
+          setTimeout(
+            () => resolve(getNextWasteEvent(new Date(), 'tueB')),
+            Math.random(),
+          ),
+        ),
+    )
+    .value()
+
+  return defer({
     today: new Date(),
-    cards: store.list().map((address) => ({
-      address,
-      // TODO: fetch this with a POST
-      event: getNextWasteEvent(new Date(), 'tueB'),
-    })),
+    cards: addresses.map((address) => ({ address })),
+    ...calendarEventsByAddressId,
   })
 }
 
@@ -56,16 +75,43 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   return {}
 }
 
+/**
+ * Extracts all of the promises from the loader data and returns them as a Record<string, Promise<CalendarEvent>>
+ */
+const getPromises = (obj: object): Map<string, Promise<CalendarEvent>> =>
+  new Map(Object.entries(obj).filter(([, v]) => v instanceof Promise))
+
 export default function Index() {
-  const { today, cards } = useLoaderData<typeof loader>()
+  const { today, cards, ...rest } = useLoaderData<typeof loader>()
+
+  const promises = getPromises(rest)
+
+  const cardsAndPromises = cards
+    .filter(({ address }) => promises.has(address.id))
+    .map(({ address }) => ({
+      address,
+      eventPromise: promises.get(address.id)!,
+    }))
 
   return (
     <Stack justify="center" align="center">
       <Title order={1}>Your Addresses</Title>
       <List spacing="sm" listStyleType="none">
-        {cards.map(({ address, event }) => (
+        {cardsAndPromises.map(({ address, eventPromise }) => (
           <ListItem key={address.id}>
-            <TrashPickupCard baseDate={today} event={event} address={address} />
+            <Suspense fallback={<LoadingTrashPickupCard address={address} />}>
+              <Await resolve={eventPromise}>
+                {(event) =>
+                  isValidEvent(event) ? (
+                    <TrashPickupCard
+                      baseDate={today}
+                      event={event}
+                      address={address}
+                    />
+                  ) : null
+                }
+              </Await>
+            </Suspense>
           </ListItem>
         ))}
       </List>
