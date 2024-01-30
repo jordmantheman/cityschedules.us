@@ -3,8 +3,7 @@ import {
   Button,
   Card,
   Group,
-  Loader,
-  Skeleton,
+  Overlay,
   Text,
   Title,
   rem,
@@ -49,7 +48,7 @@ export function TrashPickupCard({
   const fetcher = useFetcher({ key: fetcherDeleteKey(address.id) })
 
   return (
-    <Card padding="lg" radius="md" withBorder w="320px">
+    <Card padding="lg" radius="md" w="320px">
       <SplashSection>
         <Group justify="center" className={classes.overlay}>
           {trash && <IconTrash size="150" color="gray" />}
@@ -83,7 +82,7 @@ export function TrashPickupCard({
 
 function SplashSection({ children }: { children?: React.ReactNode }) {
   return (
-    <Card.Section className={classes['icon-section']}>
+    <Card.Section mt="-lg" className={classes['icon-section']}>
       <AspectRatio ratio={16 / 9}>{children}</AspectRatio>
     </Card.Section>
   )
@@ -142,23 +141,23 @@ export interface LoadingTrashPickupCardProps {
   address: Address
 }
 
-export function LoadingTrashPickupCard({
-  address,
-}: LoadingTrashPickupCardProps) {
+export function ErrorTrashPickupCard({ address }: LoadingTrashPickupCardProps) {
   const fetcher = useFetcher({ key: fetcherDeleteKey(address.id) })
 
   return (
-    <Card padding="lg" radius="md" withBorder w="320px">
+    <Card padding="lg" radius="md" w="320px">
       <SplashSection>
-        <Loader size={100} color="gray" />
+        <Overlay
+          gradient="linear-gradient(145deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)"
+          blur={15}
+        >
+          <Text tt="uppercase" c="white">
+            Something went wrong
+          </Text>
+        </Overlay>
       </SplashSection>
       <AddressSection {...address} />
       <Card.Section inheritPadding>
-        <Skeleton animate width="70%">
-          <Text>Next week</Text>
-        </Skeleton>
-      </Card.Section>
-      <Card.Section>
         <fetcher.Form method="post">
           <input type="hidden" name="id" value={address.id} />
           <Button

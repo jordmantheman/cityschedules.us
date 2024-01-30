@@ -5,15 +5,14 @@ import {
   type LoaderFunctionArgs,
   type MetaFunction,
 } from '@remix-run/cloudflare'
-import { defer, json, redirect } from '@remix-run/cloudflare'
-import { Await, useLoaderData } from '@remix-run/react'
+import { json, redirect } from '@remix-run/cloudflare'
+import { useLoaderData } from '@remix-run/react'
 import { IconTextPlus } from '@tabler/icons-react'
-import { chain } from 'lodash'
-import { Suspense } from 'react'
+import { zip } from 'lodash'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 import {
-  LoadingTrashPickupCard,
+  ErrorTrashPickupCard,
   TrashPickupCard,
   isValidEvent,
 } from './trash-pickup-card'
@@ -40,23 +39,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect('/wi/madison')
   }
 
-  const calendarEventsByAddressId = chain(addresses)
-    .keyBy('id')
-    .mapValues(
+  const events = await Promise.allSettled(
+    addresses.map(
       (address) =>
         new Promise<CalendarEvent>((resolve) =>
           setTimeout(
             () => resolve(getNextWasteEvent(new Date(), 'tueB')),
-            Math.random(),
+            Math.random() * 1,
           ),
         ),
-    )
-    .value()
+    ),
+  )
 
-  return defer({
+  return json({
     today: new Date(),
-    cards: addresses.map((address) => ({ address })),
-    ...calendarEventsByAddressId,
+    cards: zip(addresses, events).map(([address, event]) => ({
+      address,
+      event: event?.status === 'fulfilled' ? event.value : null,
+      error: event?.status === 'rejected' ? event.reason : null,
+    })),
   })
 }
 
@@ -64,7 +65,7 @@ const deleteSchema = zfd.formData({
   id: zfd.text(z.string()),
 })
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   if (request.method === 'POST') {
     const { id } = deleteSchema.parse(await request.formData())
     const store = await AddressStore.parse(request)
@@ -75,45 +76,29 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   return {}
 }
 
-/**
- * Extracts all of the promises from the loader data and returns them as a Record<string, Promise<CalendarEvent>>
- */
-const getPromises = (obj: object): Map<string, Promise<CalendarEvent>> =>
-  new Map(Object.entries(obj).filter(([, v]) => v instanceof Promise))
-
 export default function Index() {
-  const { today, cards, ...rest } = useLoaderData<typeof loader>()
-
-  const promises = getPromises(rest)
-
-  const cardsAndPromises = cards
-    .filter(({ address }) => promises.has(address.id))
-    .map(({ address }) => ({
-      address,
-      eventPromise: promises.get(address.id)!,
-    }))
+  const { today, cards } = useLoaderData<typeof loader>()
 
   return (
     <Stack justify="center" align="center">
       <Title order={1}>Your Addresses</Title>
       <List spacing="sm" listStyleType="none">
-        {cardsAndPromises.map(({ address, eventPromise }) => (
-          <ListItem key={address.id}>
-            <Suspense fallback={<LoadingTrashPickupCard address={address} />}>
-              <Await resolve={eventPromise}>
-                {(event) =>
-                  isValidEvent(event) ? (
-                    <TrashPickupCard
-                      baseDate={today}
-                      event={event}
-                      address={address}
-                    />
-                  ) : null
-                }
-              </Await>
-            </Suspense>
-          </ListItem>
-        ))}
+        {cards.map(
+          ({ address, event }) =>
+            address && (
+              <ListItem key={address!.id}>
+                {isValidEvent(event) ? (
+                  <TrashPickupCard
+                    baseDate={today}
+                    event={event}
+                    address={address}
+                  />
+                ) : (
+                  <ErrorTrashPickupCard address={address} />
+                )}
+              </ListItem>
+            ),
+        )}
       </List>
       <Button
         component="a"
