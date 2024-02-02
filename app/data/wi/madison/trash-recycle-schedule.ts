@@ -7,6 +7,7 @@
  *
  * TODO: This module still doesn't handle holidays, which can arbitrarily offset a pickup by +1 or -1 day.
  */
+import type { MadisonSchedule } from './remote'
 import { type Day, getWeek, nextDay } from 'date-fns'
 
 type MadisonCalendarEvent = {
@@ -21,24 +22,18 @@ type MadisonCalendarEvent = {
  *
  * K.I.S.S. -- don't parse strings when you don't have to.
  */
-const madisonSchedules = new Map<string, [Day, 'A' | 'B']>([
-  ['mona', [1, 'A']],
-  ['monb', [1, 'B']],
-  ['tuea', [2, 'A']],
-  ['tueb', [2, 'B']],
-  ['weda', [3, 'A']],
-  ['wedb', [3, 'B']],
-  ['thua', [4, 'A']],
-  ['thub', [4, 'B']],
-  ['fria', [5, 'A']],
-  ['frib', [5, 'B']],
+const madisonSchedules = new Map<MadisonSchedule, [Day, 'A' | 'B']>([
+  ['monA', [1, 'A']],
+  ['monB', [1, 'B']],
+  ['tueA', [2, 'A']],
+  ['tueB', [2, 'B']],
+  ['wedA', [3, 'A']],
+  ['wedB', [3, 'B']],
+  ['thuA', [4, 'A']],
+  ['thuB', [4, 'B']],
+  ['friA', [5, 'A']],
+  ['friB', [5, 'B']],
 ])
-
-/**
- * @returns true if schedule is a schedule we recognize
- */
-export const isValidSchedule = (schedule: string) =>
-  madisonSchedules.has(schedule.toLowerCase())
 
 /**
  * Algorithmically generate the next waste event based on the initial date and schedule.
@@ -53,14 +48,8 @@ export const isValidSchedule = (schedule: string) =>
  */
 export const getNextWasteEvent = (
   initial: Date,
-  schedule: string,
+  schedule: MadisonSchedule,
 ): MadisonCalendarEvent => {
-  schedule = schedule.toLowerCase()
-
-  if (!isValidSchedule(schedule)) {
-    throw new Error(`Invalid schedule: ${schedule}`)
-  }
-
   const [day, sched] = madisonSchedules.get(schedule)!
 
   // TODO: Implement holiday overrides

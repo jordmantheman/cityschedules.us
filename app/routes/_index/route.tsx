@@ -1,4 +1,3 @@
-import type { CalendarEvent } from '../../data'
 import { Button, List, ListItem, Stack, Title } from '@mantine/core'
 import {
   type ActionFunctionArgs,
@@ -39,20 +38,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect('/wi/madison')
   }
 
+  const today = new Date()
+
   const events = await Promise.allSettled(
-    addresses.map(
-      (address) =>
-        new Promise<CalendarEvent>((resolve) =>
-          setTimeout(
-            () => resolve(getNextWasteEvent(new Date(), 'tueB')),
-            Math.random() * 1,
-          ),
-        ),
-    ),
+    addresses.map((address) => getNextWasteEvent({ address, initial: today })),
   )
 
   return json({
-    today: new Date(),
+    today,
     cards: zip(addresses, events).map(([address, event]) => ({
       address,
       event: event?.status === 'fulfilled' ? event.value : null,
