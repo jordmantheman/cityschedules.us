@@ -7,9 +7,14 @@ import {
 import { json, redirect } from '@remix-run/cloudflare'
 import { useLoaderData } from '@remix-run/react'
 import { IconTextPlus } from '@tabler/icons-react'
+import { zip } from 'lodash'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
-import { TrashPickupCard } from './trash-pickup-card'
+import {
+  ErrorTrashPickupCard,
+  TrashPickupCard,
+  isValidEvent,
+} from './trash-pickup-card'
 import { AddressStore } from '../../address-store.server'
 import { getNextWasteEvent } from '../../data'
 
@@ -27,16 +32,24 @@ export const meta: MetaFunction = () => {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const store = await AddressStore.parse(request)
 
-  if (store.list().length === 0) {
-    return redirect('/wi/madison')
+  const addresses = store.list()
+
+  if (addresses.length === 0) {
+    throw redirect('/wi/madison')
   }
 
+  const today = new Date()
+
+  const events = await Promise.allSettled(
+    addresses.map((address) => getNextWasteEvent({ address, initial: today })),
+  )
+
   return json({
-    today: new Date(),
-    cards: store.list().map((address) => ({
+    today,
+    cards: zip(addresses, events).map(([address, event]) => ({
       address,
-      // TODO: fetch this with a POST
-      event: getNextWasteEvent(new Date(), 'tueB'),
+      event: event?.status === 'fulfilled' ? event.value : null,
+      error: event?.status === 'rejected' ? event.reason : null,
     })),
   })
 }
@@ -45,7 +58,7 @@ const deleteSchema = zfd.formData({
   id: zfd.text(z.string()),
 })
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   if (request.method === 'POST') {
     const { id } = deleteSchema.parse(await request.formData())
     const store = await AddressStore.parse(request)
@@ -63,11 +76,22 @@ export default function Index() {
     <Stack justify="center" align="center">
       <Title order={1}>Your Addresses</Title>
       <List spacing="sm" listStyleType="none">
-        {cards.map(({ address, event }) => (
-          <ListItem key={address.id}>
-            <TrashPickupCard baseDate={today} event={event} address={address} />
-          </ListItem>
-        ))}
+        {cards.map(
+          ({ address, event }) =>
+            address && (
+              <ListItem key={address!.id}>
+                {isValidEvent(event) ? (
+                  <TrashPickupCard
+                    baseDate={today}
+                    event={event}
+                    address={address}
+                  />
+                ) : (
+                  <ErrorTrashPickupCard address={address} />
+                )}
+              </ListItem>
+            ),
+        )}
       </List>
       <Button
         component="a"
