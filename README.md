@@ -1,6 +1,14 @@
-# Welcome to Madison Pickup (powered by Remix)!
+# Welcome to CitySchedules.us (powered by Remix)!
 
-This is the source code for (insert url here).
+This is the source code for (https://cityschedules.us). This website is designed to simplify understanding and tracking your various city pickup services. Why is it open source? Because this web-app scratches my own itch of wanting a site that makes it dead simple to answer the following questions:
+
+1. Is recycle getting picked up this week?
+1. How does the holiday affect my trash pickup?
+1. When is my next leaf pickup? *(Coming Soon)*
+
+And if providing the code as Open Source software helps anyone learn... then that's an added benefit.
+
+**Currently serving Madison, Wisconsin**
 
 ## Development
 
