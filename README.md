@@ -10,29 +10,24 @@ And if providing the code as Open Source software helps anyone learn... then tha
 
 **Currently serving Madison, Wisconsin**
 
-## Development
+
+## Development Commands
+
+### `npm run dev`
 
 You will be running two processes during development:
 
 - The Miniflare server (miniflare is a local environment for Cloudflare Workers)
 - The Remix development server
 
-Both are started with one command:
-
-```sh
-npm run dev
-```
+Both are started.
 
 Open up [http://127.0.0.1:8787](http://127.0.0.1:8787) and you should be ready to go!
 
-If you want to check the production build, you can stop the dev server and run following commands:
+### `npm run build && npm start`
 
-```sh
-npm run build
-npm start
-```
+Previews the production build.
 
-Then refresh the same URL in your browser (no live reload for production builds).
 
 ## Deployment
 
@@ -40,6 +35,10 @@ If you don't already have an account, then [create a cloudflare account here](ht
 
 Once that's done, you should be able to deploy your app:
 
-```sh
-npm run deploy
-```
+### `npm run deploy-staging`
+
+Deploys to [staging](https://cityschedules-us-staging.jordmantheman.workers.dev) environment.
+
+### `npm run deploy-production`
+
+Deploys to [production](https://cityschedules.us) environment.
