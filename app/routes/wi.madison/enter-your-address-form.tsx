@@ -83,14 +83,14 @@ export function EnterYourAddressForm({
           <Alert
             variant="light"
             radius="xs"
-            title="Sorry for the dust!"
-            withCloseButton
+            title="Need help?"
             icon={<IconInfoCircle />}
           >
-            I don't (yet) have a sophisticated way to parse a full street
-            address written in a more natural form (e.g. "1234 E Main St Apt
-            2"). So, for now, please enter your address in the format above.
-            Thanks!
+            Visit the{' '}
+            <a href="https://www.cityofmadison.com/streets/refuse/collectionlookup.cfm">
+              Madison Streets division
+            </a>{' '}
+            collection lookup.
           </Alert>
 
           <Button type="submit" fullWidth>

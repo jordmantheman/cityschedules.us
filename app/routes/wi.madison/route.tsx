@@ -10,23 +10,29 @@ import { zfd } from 'zod-form-data'
 import { EnterYourAddressForm } from './enter-your-address-form'
 import { AddressStore } from '../../address-store.server'
 import { StreetDirection, StreetType } from '../../enums'
+import { Breadcrumbs } from '../../shared'
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Add an address for Madison, WI' },
+    {
+      title: 'Madison, Wisconsin: Add an Address',
+    },
     {
       name: 'description',
       content:
-        'Add an address for Madison, WI to see your trash and recycling pickup schedule.',
+        "Add an address for Madison, Wisconsin to see your trash and recycling pickup schedule. We'll remember it for next time.",
     },
   ]
 }
+
+const crumbs = [{ title: 'Home', href: '/' }, { title: 'Madison, Wisconsin' }]
 
 export default function Index() {
   const data = useActionData<typeof action>()
 
   return (
     <Container miw={320} maw={1024} w="50%">
+      <Breadcrumbs pb={20}>{crumbs}</Breadcrumbs>
       <Paper shadow="lg" radius="lg" withBorder p="sm">
         <EnterYourAddressForm
           formProps={{

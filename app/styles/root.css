@@ -1,11 +1,3 @@
 body {
-  background-image: url(public/images/madison-aerial.avif);
-  background-position: center 25%;
-  background-repeat: no-repeat;
   font-family: system-ui, sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
 }
