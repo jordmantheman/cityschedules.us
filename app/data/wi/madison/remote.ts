@@ -45,6 +45,7 @@ export const MadisonAddressSchema = z.object({
       'RR',
       'Run',
       'Spur',
+      'St',
       'Sq',
       'Ter',
       'Trce',
@@ -69,6 +70,7 @@ const MadisonSchedules = [
   'wedB',
   'thuA',
   'thuB',
+  'ThuC', // Madison has a third Thursday schedule, the casing is NOT a typo
   'friA',
   'friB',
 ] as const
@@ -98,7 +100,6 @@ export const fetchSchedule = async (
   )
 
   const schedule = parseSchedule(response.headers.get('location'))
-
   if (!schedule) {
     throw new Error(
       `Invalid schedule: status=${
