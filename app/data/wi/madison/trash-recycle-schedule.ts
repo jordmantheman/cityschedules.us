@@ -22,7 +22,7 @@ type MadisonCalendarEvent = {
  *
  * K.I.S.S. -- don't parse strings when you don't have to.
  */
-const madisonSchedules = new Map<MadisonSchedule, [Day, 'A' | 'B']>([
+const madisonSchedules = new Map<MadisonSchedule, [Day, 'A' | 'B' | 'C']>([
   ['monA', [1, 'A']],
   ['monB', [1, 'B']],
   ['tueA', [2, 'A']],
@@ -31,6 +31,7 @@ const madisonSchedules = new Map<MadisonSchedule, [Day, 'A' | 'B']>([
   ['wedB', [3, 'B']],
   ['thuA', [4, 'A']],
   ['thuB', [4, 'B']],
+  ['ThuC', [4, 'C']],
   ['friA', [5, 'A']],
   ['friB', [5, 'B']],
 ])
@@ -65,7 +66,12 @@ export const getNextWasteEvent = (
       2 ===
     0
 
-  if ((sched === 'A' && weekIsEven) || (sched === 'B' && !weekIsEven)) {
+  if (
+    // schedules A and C appear to be the same
+    (sched === 'A' && weekIsEven) ||
+    (sched === 'C' && weekIsEven) ||
+    (sched === 'B' && !weekIsEven)
+  ) {
     return { date: nextPickupDayExcludingToday, recycle: true, trash: true }
   } else {
     return { date: nextPickupDayExcludingToday, trash: true }

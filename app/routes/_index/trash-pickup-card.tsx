@@ -139,10 +139,21 @@ function RelativeDate({
 
 export interface LoadingTrashPickupCardProps {
   address: Address
+  error?: string
 }
 
-export function ErrorTrashPickupCard({ address }: LoadingTrashPickupCardProps) {
+export function ErrorTrashPickupCard({
+  address,
+  error,
+}: LoadingTrashPickupCardProps) {
   const fetcher = useFetcher({ key: fetcherDeleteKey(address.id) })
+
+  if (error) {
+    console.error('error fetching schedule', {
+      address,
+      reason: error,
+    })
+  }
 
   return (
     <Card padding="lg" radius="md" w="320px">

@@ -4,12 +4,11 @@ This is the source code for (https://cityschedules.us). This website is designed
 
 1. Is recycle getting picked up this week?
 1. How does the holiday affect my trash pickup?
-1. When is my next leaf pickup? *(Coming Soon)*
+1. When is my next leaf pickup? _(Coming Soon)_
 
 And if providing the code as Open Source software helps anyone learn... then that's an added benefit.
 
 **Currently serving Madison, Wisconsin**
-
 
 ## Development Commands
 
@@ -27,7 +26,6 @@ Open up [http://127.0.0.1:8787](http://127.0.0.1:8787) and you should be ready t
 ### `npm run build && npm start`
 
 Previews the production build.
-
 
 ## Deployment
 
